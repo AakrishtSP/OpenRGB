@@ -275,6 +275,10 @@ LenovoRGBController_Gen7_8::LenovoRGBController_Gen7_8(LenovoGen7And8USBControll
     case LEGION_7GEN10:
         description = "Lenovo Legion 7 Generation 10";
         break;
+
+    case LEGION_5GEN10:
+        description = "Lenovo Legion 5 Gen 10";
+        break;
     }
 
     brightness = controller->getCurrentBrightness();
@@ -319,7 +323,7 @@ void LenovoRGBController_Gen7_8::SetupZones()
         lenovo_zones.push_back(lenovo_legion_7gen7_vents);
     }
 
-    if (controller->getPid() == LEGION_7GEN10)
+    if (controller->getPid() == LEGION_7GEN10 || controller->getPid() == LEGION_5_15AHP15_2025)
     {
         lenovo_zones.push_back(lenovo_legion_7gen7_logo);
         lenovo_zones.push_back(lenovo_legion_7gen10_vents);
@@ -422,7 +426,7 @@ void LenovoRGBController_Gen7_8::DeviceUpdateMode()
         {
             controller->setLedsDirectOn(profile_id);
             direct_enabled = true;
-            if(controller->getPid() != LEGION_7GEN10)
+            if(controller->getPid() != LEGION_7GEN10 && controller->getPid() != LEGION_5_15AHP15_2025)
             {
                 controller->setLedsByGroup(profile_id, GetLedGroups());
             }
@@ -446,7 +450,7 @@ void LenovoRGBController_Gen7_8::DeviceUpdateLEDs()
 {
     if(modes[active_mode].value == LENOVO_LEGION_GEN7_8_MODE_DIRECT)
     {
-        if(controller->getPid() == LEGION_7GEN10)
+        if(controller->getPid() == LEGION_7GEN10 || controller->getPid() == LEGION_5_15AHP15_2025)
         {
             /*---------------------------------------------*\
             | Gen10 may ignore A1 updates unless D0 is      |
