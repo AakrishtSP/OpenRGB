@@ -13,6 +13,16 @@
 
 using namespace std;
 
+static bool UsesGen10PacketFormat(uint16_t pid)
+{
+    return pid == LEGION_7GEN10 || pid == LEGION_5GEN10;
+}
+
+static bool IsKeyboardOnlyDevice(uint16_t pid)
+{
+    return pid == LEGION_5GEN10;
+}
+
 LenovoRGBController_Gen7_8::LenovoRGBController_Gen7_8(LenovoGen7And8USBController* controller_ptr)
 {
     controller = controller_ptr;
@@ -288,6 +298,17 @@ LenovoRGBController_Gen7_8::LenovoRGBController_Gen7_8(LenovoGen7And8USBControll
         m.brightness = brightness;
     }
 
+    if(IsKeyboardOnlyDevice(controller->getPid()))
+    {
+        modes.erase(remove_if(modes.begin(), modes.end(), [](const mode& current_mode)
+        {
+            return current_mode.value == LENOVO_LEGION_GEN7_8_MODE_RIPPLE ||
+                   current_mode.value == LENOVO_LEGION_GEN7_8_MODE_AUDIO_BOUNCE ||
+                   current_mode.value == LENOVO_LEGION_GEN7_8_MODE_AUDIO_RIPPLE ||
+                   current_mode.value == LENOVO_LEGION_GEN7_8_MODE_DIRECT;
+        }), modes.end());
+    }
+
     SetupZones();
 
     /*-----------------------------------------------------*\
@@ -315,7 +336,11 @@ void LenovoRGBController_Gen7_8::SetupZones()
 {
     vector<lenovo_zone> lenovo_zones;
     lenovo_zones.push_back(legion7_gen7and8_kbd_ansi);
-    lenovo_zones.push_back(legion7_gen7and8_neon);
+
+    if(!IsKeyboardOnlyDevice(controller->getPid()))
+    {
+        lenovo_zones.push_back(legion7_gen7and8_neon);
+    }
 
     if (controller->getPid() == LEGION_7GEN7)
     {
@@ -323,7 +348,7 @@ void LenovoRGBController_Gen7_8::SetupZones()
         lenovo_zones.push_back(lenovo_legion_7gen7_vents);
     }
 
-    if (controller->getPid() == LEGION_7GEN10 || controller->getPid() == LEGION_5_15AHP15_2025)
+    if (controller->getPid() == LEGION_7GEN10)
     {
         lenovo_zones.push_back(lenovo_legion_7gen7_logo);
         lenovo_zones.push_back(lenovo_legion_7gen10_vents);
@@ -426,7 +451,7 @@ void LenovoRGBController_Gen7_8::DeviceUpdateMode()
         {
             controller->setLedsDirectOn(profile_id);
             direct_enabled = true;
-            if(controller->getPid() != LEGION_7GEN10 && controller->getPid() != LEGION_5_15AHP15_2025)
+            if(!UsesGen10PacketFormat(controller->getPid()))
             {
                 controller->setLedsByGroup(profile_id, GetLedGroups());
             }
@@ -450,7 +475,7 @@ void LenovoRGBController_Gen7_8::DeviceUpdateLEDs()
 {
     if(modes[active_mode].value == LENOVO_LEGION_GEN7_8_MODE_DIRECT)
     {
-        if(controller->getPid() == LEGION_7GEN10 || controller->getPid() == LEGION_5_15AHP15_2025)
+        if(UsesGen10PacketFormat(controller->getPid()))
         {
             /*---------------------------------------------*\
             | Gen10 may ignore A1 updates unless D0 is      |
